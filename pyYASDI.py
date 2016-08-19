@@ -164,6 +164,7 @@ class Device:
     def update_channels(self):
         """Aktualisiert die Kanaele des Geraetes und gibt die KanalHandles zurueck"""
         result = self.master.GetChannelHandles(handle=self.handle,parameter_channel=0)
+        self.channels = []
         for i in result:
             if i != 0:
                 self.channels.append(Channel(channel_handle=i,device_handle=self.handle,parameter_channel=0,master=self.master))
@@ -268,7 +269,8 @@ class Channel:
 
     def update_value(self):
         """Kanalwert aktualisieren, diese Methode braucht einige Sekunden. Gibt den Wert zurueck"""
-        result = self.master.GetChannelValue(self.channel_handle,self.device_handle,0)
+        result = self.master.GetChannelValue(self.channel_handle,self.device_handle,5)
+        #result = (0, 'no value')
         if result == -3: return result
         else:
             channeltimestamp = self.update_timestamp()
