@@ -158,7 +158,7 @@ class Plant:
         """
         data_all = {}
         for d in self.get_devices():
-            data_all[d.get_name()] = self.data_device(d)
+            data_all[d.get_name()] = self.data_device(d, parameter_channel)
 
         print(data_all)
 
