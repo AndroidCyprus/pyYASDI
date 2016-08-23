@@ -15,7 +15,7 @@ import yasdiwrapper
 logger = logging.getLogger(__name__)
 
 
-class pyYASDI:
+class Plant:
     """pyYASDI - ermoeglicht bequeme SMANet bedienung"""
     def __init__(self,driver=0,debug=0,max_devices=1):
         """Konstruktor
