@@ -6,7 +6,14 @@ Datum: 18.3.07 / 18.3.07 / 18.3.07
 Datei: pyYASDI.py
 
 + SMA YASDI Library Wrapper fuer Python Scripting Language v1"""
+
+import logging
+
 import yasdiwrapper
+
+
+logger = logging.getLogger(__name__)
+
 
 class pyYASDI:
     """pyYASDI - ermoeglicht bequeme SMANet bedienung"""
@@ -23,10 +30,10 @@ class pyYASDI:
         self.YasdiMaster = yasdiwrapper.YasdiMaster()
         self.Yasdi = yasdiwrapper.Yasdi()
         self.YasdiMaster.yasdiMasterInitialize()
-        
+
         self.DriverName = self.goOnline(self.driver)
         if self.DriverName == 0: self.die()
-        
+
         result = self.detectDevices(self.max_devices)
 
         self.load_devices()
@@ -36,7 +43,7 @@ class pyYASDI:
                 Parameter:
                 msg =               Die Nachricht die ausgegeben / gespeichert werden soll
                 error = 0           error = 0 Status error = 1 Fehlermeldung"""
-        if error == 0: 
+        if error == 0:
             if self.debug: print ":>        %s"%(msg)
         elif error == 1:
             if self.debug: print ":> Error: %s"%(msg)
@@ -114,6 +121,49 @@ class pyYASDI:
                 Device-Klasse eines jeden Geraetes"""
         return self.DeviceList
 
+    def data_device(self, device, parameter_channel=True):
+        logger.info("read device {}".format(device.get_name()))
+        data = {}
+        for n,i in enumerate(device.channels):
+            if not parameter_channel and i.parameter_channel:
+                # ignore parameter channel
+                logger.info("\tignore parameter channel")
+                continue
+
+            i.update_name()
+            logger.info("\tread channel {}".format(i.get_name()))
+
+            i.update_value()
+            value, text, timestamp = i.value
+
+            # set value to interesting information
+            # if text then text, otherwise the value
+            value_interesting = text
+            if not value_interesting:
+                value_interesting = value
+
+            data[i.get_name()] = value
+
+        return data
+
+    def data_all(self, parameter_channel=True):
+        """get data of all devices and channels
+
+        Args:
+            parameter_channel (bool): If true, from spot and prameter channel.
+            Otherwise only from spot channels.
+
+        Returns:
+            data (dict): of all channels of all devices
+        """
+        data_all = {}
+        for d in self.get_devices():
+            data_all[d.get_name()] = self.data_device(d)
+
+        print(data_all)
+
+        return data_all
+
 class Device:
     """DeviceKlasse mit den moeglichen Eigenschaften und Methoden eines Geraetes (Wechselrichter und SunnyBC etc.)"""
     def __init__(self,handle,master,debug=0):
@@ -128,7 +178,7 @@ class Device:
         self.channels = []
 
         result = self.update_all(nochannels=0)
-        
+
         self.name = result[0]
         self.sn = result[1]
         self.type = result[2]
@@ -138,7 +188,7 @@ class Device:
                 Parameter:
                 msg =               Die Nachricht die ausgegeben / gespeichert werden soll
                 error = 0           error = 0 Status error = 1 Fehlermeldung"""
-        if error == 0: 
+        if error == 0:
             if self.debug: print ":>        %s"%(msg)
         elif error == 1:
             if self.debug: print ":> Error: %s"%(msg)
@@ -175,23 +225,23 @@ class Device:
             if i != 0:
                 self.channels.append(Channel(channel_handle=i,device_handle=self.handle,parameter_channel=1,master=self.master))
                 self.msg("Geraeteparameterchannel %s"%(i),0)
-                
+
         return self.channels
 
     def update_all(self,noname=0,nosn=0,notype=0,nochannels=0):
         """Aktualisiert alles, das komplette Geraet
                 Parameter:
-                noname = 0          Namen des Geraetes nicht aktualisieren
-                nosn = 0            SN des Geraetes nicht aktualisieren
-                notype = 0          Typen des Geraetes nicht aktualisieren
-                nochannels = 0      Kanaele des Geraetes nicht aktualisieren
+                noname = 0          set to true to not refresh the name
+                nosn = 0            if true, do not refresh SN
+                notype = 0          if true, do not refresh type
+                nochannels = 0      if true, do not refresh channels
                 Ergebnis:
                 Tupel (name,sn,type,channels)"""
         name = 0
         sn = 0
         typ = 0
         channels = 0
-        
+
         if not noname: name = self.update_name()
         if not nosn: sn = self.update_sn()
         if not notype: typ = self.update_type()                 # type nicht erlaubt weil wegen Schluesselwort
@@ -236,6 +286,7 @@ class Channel:
         self.channel_handle = channel_handle
         self.device_handle = device_handle
         self.max_channel_age = max_channel_age
+        self.parameter_channel = parameter_channel
         self.master = master
         self.name = ""
         self.statustext = []            #Entweder Liste mit Statustexten oder wenn es keine fuer diesen Channel gibt  | -1 wenn Kanalhandle ungueltig
@@ -249,7 +300,7 @@ class Channel:
                 Parameter:
                 msg =               Die Nachricht die ausgegeben / gespeichert werden soll
                 error = 0           error = 0 Status error = 1 Fehlermeldung"""
-        if error == 0: 
+        if error == 0:
             if self.debug: print ":>        %s"%(msg)
         elif error == 1:
             if self.debug: print ":> Error: %s"%(msg)
@@ -345,7 +396,7 @@ class Channel:
 
     def get_range(self):
         """Gibt den KanalWerteBereicht zurueck"""
-        return self.range    
+        return self.range
 
 if __name__ == "__main__":
     #main = pyYASDI()
