@@ -21,6 +21,8 @@ cmake ..
 make
 sudo make install  
 
+sudo ldconfig
+
 # logout and login to update
 # paths for libraries, otherwise set
 export LD_LIBRARY_PATH=/usr/local/lib/
