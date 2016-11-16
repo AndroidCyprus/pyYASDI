@@ -13,7 +13,7 @@ mkdir yasdi
 cd yasdi
 wget http://www.sma.de/yasdi-source-code.html
 unzip yasdi-source-code.html
-sudo apt-get install cmake
+sudo apt-get install -y cmake
 cd projects/generic-cmake
 mkdir build-gcc
 cd build-gcc
